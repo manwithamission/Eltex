@@ -1,14 +1,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
 char *array[10];
 
 int init_str() {	
 	int strnum;
 	printf("Введите кол-во строк: ");
 	scanf("%d", &strnum);
-	printf("Кол-во строк: %d\n", strnum);
+	// printf("Кол-во строк: %d\n", strnum);
 	int i;
+
+	if (strnum > 10) {
+		strnum = 10;
+	}
 
 	for (i = 0; i < strnum; i++) {
 		array[i] = (char*)malloc(strnum + 1);
@@ -24,7 +29,7 @@ int init_str() {
 }
 
 static int cmp(const void *p1, const void *p2){
-	return strcmp(*(char * const*)p1, *(char* const*)p2);
+	return strcmp(*(char* const*)p1, *(char* const*)p2);
 }
 
 int main() {
