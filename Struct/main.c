@@ -28,7 +28,7 @@ int main(){
 	scanf("%d", &booksum);
 	int i;
 	books** bk;
-	bk = (books**) malloc (sizeof(books*) * booksum);
+	bk = (books**)malloc(sizeof(books*) * booksum);
 
 	for (i = 0; i < booksum; i++) {
 		bk[i] = (books*) malloc (sizeof(books));
