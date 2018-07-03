@@ -1,26 +1,34 @@
 #!/bin/bash
 
-if ! [ -z $1]; then
-echo "current directory"$1
-if ! [ -d $1 ]; then
-mkdir $1
-fi
-cd $1
-fi
+echo "Укажите место расположения: "
+read u
+cd $u
+echo "Назовите каталоги: "
+read w
+echo "Укажите количество каталогов: "
+read q
+echo "Назовите подкаталоги: "
+read r
+echo "Укажите количество подкаталогов: "
+read e
+echo "Назовите файлы: "
+read y
+echo "Укажите количество файлов: "
+read t
 
-for ((a=0; a <= 4 ; a++)) 
-do mkdir "Каталог"$a;
-	cd "Каталог"$a;
-	for ((b=0; b <= 9 ; b++)) 
-		do mkdir "Подкаталог"$b
-			cd "Подкаталог"$b	
-			for ((c=0; c <= 19 ; c++)) 
-				do touch "Файл"$c
+
+for ((a=0; a < $q ; a++)) 
+do mkdir "$w$a";
+	cd "$w$a";
+	for ((b=0; b < $e ; b++)) 
+		do mkdir "$r$b"
+			cd "$r$b"	
+			for ((c=0; c < $t ; c++)) 
+				do touch "$y$c"
 				done
 				cd ../
 		done
 		cd ../
 
 done ;
-echo $a
 exit 0
