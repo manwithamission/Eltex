@@ -20,7 +20,7 @@ mess_t buf;
 int i, pid[20], gold;
 int qid;
 key_t msgkey;
-int gl[20] = {0,0,0,0,0,0};
+int gl[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int length;
 
 int main(int argc, char *argv[]) {
@@ -32,22 +32,23 @@ int main(int argc, char *argv[]) {
 	for(i = 0; i < 20; i++) {
 		pid[i]=fork();
 		if(pid[i] == 0) {
-			printf("SON - QID = %d\n", qid);
+			// printf("SON - QID = %d\n", qid);
 			while(1) {
 				buf.mtype = 1;
 				buf.one = 1;
 				buf.pid = getpid();
 				msgsnd(qid, &buf, length, 1);
+				sleep(1);
 			}
 		}
 	}
-	printf("FATHER - QID = %d\n", qid);
+	// printf("FATHER - QID = %d\n", qid);
 	while(gold > 0){
 		for(i = 0; i < 20; i++){
 			msgrcv(qid, &buf, length, buf.mtype, 0);
 			gold = gold - buf.one;
 			gl[i] += buf.one;
-			printf("Раб под номером: %d несет %d золота из рудника, остаток %d\n", buf.pid, buf.one, gold);
+			printf("Раб под номером: %d несет %d золота из рудника, остаток %d, результат раба: %d\n", buf.pid, buf.one, gold, gl[i]);
 			if(gold <= 0){
 				printf("Рудник обрушился\n");
 				for (i = 0; i < 20; i++){
