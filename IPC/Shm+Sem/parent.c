@@ -76,6 +76,7 @@ int main(int argc, char *argv[]) {
 //		}
 //	}
 
+	free(gl);
 	shmctl(shmid, IPC_RMID, 0);
 	semctl(semid, 0, IPC_RMID);
 	return 0;

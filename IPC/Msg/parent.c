@@ -68,7 +68,8 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}	
-	}	
+	}
+	free(gl);
 	msgctl(qid, IPC_RMID, 0);
 	return 0;
 }
