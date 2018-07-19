@@ -17,19 +17,29 @@ typedef struct mymsgbuf {
 } mess_t;
 
 mess_t buf;
-int i, pid[20], gold;
+int i, gold, worker;
 int qid;
 key_t msgkey;
-int gl[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int *gl;
 int length;
 
 int main(int argc, char *argv[]) {
+	printf("Укажите кол-во рабочих:");
+	scanf("%d", &worker);
+	int pid[worker];
+
+	gl = (int*)malloc(worker * sizeof(int)); 									//выделение памяти
+
+	for (i = 0; i < worker; i++) {												//инициализация массива рабочих
+		gl[i] = 0;
+	}
+
 	length = sizeof(mess_t) - sizeof(long);
-	msgkey = ftok("~labs/Eltexlabs/Clabs/msgget/foo", 42);
+	msgkey = ftok(".", 'm');
 	qid = msgget(msgkey, IPC_CREAT | 0660);
-	printf("Стартовое количество золота в руднике:");
+	printf("Установите золото в руднике: ");
 	scanf("%d", &gold);
-	for(i = 0; i < 20; i++) {
+	for(i = 0; i < worker; i++) {
 		pid[i]=fork();
 		if(pid[i] == 0) {
 			// printf("SON - QID = %d\n", qid);
@@ -44,7 +54,7 @@ int main(int argc, char *argv[]) {
 	}
 	// printf("FATHER - QID = %d\n", qid);
 	while(gold > 0){
-		for(i = 0; i < 20; i++){
+		for(i = 0; i < worker; i++){
 			msgrcv(qid, &buf, length, buf.mtype, 0);
 			gold = gold - buf.one;
 			gl[i] += buf.one;
