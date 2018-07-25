@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 		pid[i]=fork();
 		if(pid[i] == 0) {
 			// printf("SON - QID = %d\n", qid);
-			while(1) {
+			while(gold > 0) {
 				buf.mtype = 1;
 				buf.one = 1;
 				buf.pid = getpid();
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 			printf("Раб под номером: %d несет %d золота из рудника, остаток %d, результат раба: %d\n", buf.pid, buf.one, gold, gl[i]);
 			if(gold <= 0){
 				printf("Рудник обрушился\n");
-				for (i = 0; i < 20; i++){
+				for (i = 0; i < worker; i++){
 					kill(pid[i], SIGKILL);
 					printf("Раб %d убит\n", pid[i]);
 					printf("Раб под номером: %d принес %d золота до обрушения\n", pid[i], gl[i]); 	
