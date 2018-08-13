@@ -25,7 +25,6 @@ struct mesg_buffer {
 int msgid;
 int length;
 struct msqid_ds msqid_ds, *buf;
-// buf = &msqid_ds;
 
 char *broadcastaddress;
 
@@ -38,7 +37,6 @@ int queue() {
 
 	key_t key;
 	int msgid;
-	// ftok to generate unique key
 	key = ftok(".", 65);
 
 	msgid = msgget(key, 0666 | IPC_CREAT);
@@ -48,26 +46,22 @@ int queue() {
 }
 
 int CreateTCPServerSocket(unsigned short port) {
-	int serversocket;							/* socket to create */
-	struct sockaddr_in addr;			/* Local address */
+	int serversocket;
+	struct sockaddr_in addr;
 
-	/* Create socket for incoming connections */
 	if ( (serversocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ) {
 		Error("socket error");
 	}
-	
-	/* Construct local address structure */
-	memset(&addr, 0, sizeof(addr));				/* Zero out structure */
-	addr.sin_family      = AF_INET;				/* Internet address family */
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);	/* Server IP address */
-	addr.sin_port        = htons(port); 	/* Server port */
 
-	/* Bind to the local address */
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family      = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port        = htons(port);
+
 	if ( bind(serversocket, (struct sockaddr *) &addr, sizeof(addr)) < 0 ) {
 		Error("bind error");
 	}
 
-	/* Mark the socket so it will listen for incoming connections */
 	if ( listen(serversocket, 5) < 0 ) {
 		Error("listen error");
 	}
@@ -77,19 +71,17 @@ int CreateTCPServerSocket(unsigned short port) {
 
 void *UdpBroadcastSenderForClientSender(void *arg) {
 
-	int sock;									/* Socket */
-	struct sockaddr_in broadcastAddr;			/* Broadcast address */
-	unsigned short broadcastPort;				/* Server port */
+	int sock;
+	struct sockaddr_in broadcastAddr;
+	unsigned short broadcastPort;
 	const char *sendString = "Жду сообщений";
-	int broadcastPermission;					/* Socket opt to set permission to broadcast */
-	unsigned int sendStringLen;					/* Length of string to broadcast */
+	int broadcastPermission;
+	unsigned int sendStringLen;
 
-	// struct msqid_ds msqid_ds, *buf;				//msgctl
 	buf = &msqid_ds;
-	// int msgid = queue();
 	msgctl(msgid, IPC_STAT, buf);
 
-	broadcastPort = htons(BROADCASTPORTCLIENTSENDER );		/* Broadcast port */
+	broadcastPort = htons(BROADCASTPORTCLIENTSENDER);
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		Error("socket error");
@@ -100,19 +92,19 @@ void *UdpBroadcastSenderForClientSender(void *arg) {
 		Error("setsockopt error");
 	}
 
-	memset(&broadcastAddr, 0, sizeof(broadcastAddr));		/* Zero out structure */
-	broadcastAddr.sin_family = AF_INET;						/* Internet address family */
-	broadcastAddr.sin_addr.s_addr = inet_addr(broadcastaddress); /* Broadcast IP address */
-	broadcastAddr.sin_port = broadcastPort;					/* Broadcast port */
-	sendStringLen = strlen(sendString);						/* Find length of sendString */
+	memset(&broadcastAddr, 0, sizeof(broadcastAddr));
+	broadcastAddr.sin_family = AF_INET;
+	broadcastAddr.sin_addr.s_addr = inet_addr(broadcastaddress);
+	broadcastAddr.sin_port = broadcastPort;
+	sendStringLen = strlen(sendString);
 	
-	while (1) { /* Run forever */
+	while (1) {
 		sleep(1);
-		printf("Сообщений в очереди UDP для клиента-отправителя %ld\n", buf->msg_qnum);
+		// printf("Сообщений в очереди UDP для клиента-отправителя %ld\n", buf->msg_qnum);
 		if (buf->msg_qnum < 1) {
 			sleep(1);
 			if (sendto(sock, sendString, sendStringLen, 0, (struct sockaddr *) &broadcastAddr, sizeof(broadcastAddr)) != sendStringLen) {
-				Error("sendto() sent a different number of bytes than expected 1");
+				Error("sendto()");
 			}
 		}
 	}
@@ -120,65 +112,62 @@ void *UdpBroadcastSenderForClientSender(void *arg) {
 
 void *UdpBroadcastSenderForClientReceiver(void *arg) {
 
-	int sock;									/* Socket */
-	struct sockaddr_in broadcastAddr;			/* Broadcast address */
-	unsigned short broadcastPort;				/* Server port */
+	int sock;
+	struct sockaddr_in broadcastAddr;
+	unsigned short broadcastPort;
 	const char *sendString = "Есть сообщения";
-	int broadcastPermission;					/* Socket opt to set permission to broadcast */
-	unsigned int sendStringLen;					/* Length of string to broadcast */
+	int broadcastPermission;
+	unsigned int sendStringLen;
 
 	buf = &msqid_ds;
 	msgctl(msgid, IPC_STAT, buf);
 
-	broadcastPort = htons(BROADCASTPORTCLIENTRECEIVER );		/* Broadcast port */
+	broadcastPort = htons(BROADCASTPORTCLIENTRECEIVER);
 
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		Error("socket error");
+		Error("socket()");
 	}
 
 	broadcastPermission = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (void *) &broadcastPermission, sizeof(broadcastPermission)) < 0) {
-		Error("setsockopt error");
+		Error("setsockopt()");
 	}
 
-	memset(&broadcastAddr, 0, sizeof(broadcastAddr));		/* Zero out structure */
-	broadcastAddr.sin_family = AF_INET;						/* Internet address family */
-	broadcastAddr.sin_addr.s_addr = inet_addr(broadcastaddress); /* Broadcast IP address */
-	broadcastAddr.sin_port = broadcastPort;					/* Broadcast port */
-	sendStringLen = strlen(sendString);						/* Find length of sendString */
+	memset(&broadcastAddr, 0, sizeof(broadcastAddr));
+	broadcastAddr.sin_family = AF_INET;
+	broadcastAddr.sin_addr.s_addr = inet_addr(broadcastaddress);
+	broadcastAddr.sin_port = broadcastPort;
+	sendStringLen = strlen(sendString);
 	
-	while (1) { /* Run forever */
+	while (1) {
 		sleep(1);
-		printf("Сообщений в очереди UDP для клиента-получателя %ld\n", buf->msg_qnum);
 		if (buf->msg_qnum > 0) {
 			sleep(1);
 			if (sendto(sock, sendString, sendStringLen, 0, (struct sockaddr *) &broadcastAddr, sizeof(broadcastAddr)) != sendStringLen) {
-				Error("sendto() sent a different number of bytes than expected 2");
+				Error("sendto()");
 			}
 		}
 	}
 }
 
 void *TcpConnectionClientSender(void *arg) {
-	int serversocket;					/* Socket descriptor for server */
-	int clientsocket;					/* Socket descriptor for client */
-	unsigned short serverport;			/* Server port */
-	struct sockaddr_in echoClntAddr;	/* Client address */
+	int serversocket;
+	int clientsocket;
+	unsigned short serverport;
+	struct sockaddr_in echoClntAddr;
 	unsigned int clntLen;
 	clntLen = sizeof(echoClntAddr);
 	int recvMsgSize;
 	
-	// struct msqid_ds msqid_ds, *buf;
 	buf = &msqid_ds;
-	// int msgid = queue();
 	
-	serverport = TCPPORTCLIENTSENDER;   /* Local port */
+	serverport = TCPPORTCLIENTSENDER;
 
 	serversocket = CreateTCPServerSocket(serverport);
 
 	while (1) {
 		if ((clientsocket = accept(serversocket, (struct sockaddr *) &echoClntAddr, &clntLen)) < 0) {
-			Error("accept() failed");
+			Error("accept()");
 		}
 		printf("Жду сообщений от клиента-отправителя\n");
 
@@ -187,17 +176,14 @@ void *TcpConnectionClientSender(void *arg) {
 				Error("recv() failed");
 			}
 			if (recvMsgSize > 0) {
+				printf("%s\n", message.mesg_text);
 				message.mesg_type = 1;
-				// *message.mesg_text = *buf;
-				printf("Буфер очереди %s\n", message.mesg_text);
 				msgsnd(msgid, &message, length, 1);
 				msgctl(msgid, IPC_STAT, buf);
-				printf("Сообщений в очереди после отправки %ld\n", buf->msg_qnum);
-				// printf("Буфер %s\n", buf);
+				printf("Сообщений в очереди %ld\n", buf->msg_qnum);
 			} else {
 				msgctl(msgid, IPC_STAT, buf);
-				printf("%ld\n", buf->msg_qnum);
-				// msgctl(msgid, IPC_RMID, 0);
+				// printf("%ld\n", buf->msg_qnum);
 				break;
 			}
 		}
@@ -205,19 +191,17 @@ void *TcpConnectionClientSender(void *arg) {
 }
 
 void *TcpConnectionClientReceiver(void *arg) {
-	int serversocket;					/* Socket descriptor for server */
-	int clientsocket;					/* Socket descriptor for client */
-	unsigned short serverport;			/* Server port */
-	struct sockaddr_in echoClntAddr;	/* Client address */
+	int serversocket;
+	int clientsocket;
+	unsigned short serverport;
+	struct sockaddr_in echoClntAddr;
 	unsigned int clntLen;
 	clntLen = sizeof(echoClntAddr);
-	int i = 0;
+	int i = 1;
 	
-	// struct msqid_ds msqid_ds, *buf;
 	buf = &msqid_ds;
-	// int msgid = queue();
 	
-	serverport = TCPPORTCLIENTRECEIVER;   /* Local port */
+	serverport = TCPPORTCLIENTRECEIVER;
 
 	serversocket = CreateTCPServerSocket(serverport);
 
@@ -233,11 +217,11 @@ void *TcpConnectionClientReceiver(void *arg) {
 				if (msgrcv(msgid, &message, length, message.mesg_type, 0) < 0) {
 					Error("msgrecv()");
 				}
-				printf("%ld\n", buf->msg_qnum);
+				// printf("%ld\n", buf->msg_qnum);
 				if (send(clientsocket, message.mesg_text, 10, 0) < 0) {
-					Error("send() sent a different number of bytes than expected");	                 
+					Error("send()");	                 
 				}
-				printf("[%d]\tОтправлено клиенту-получателю:\t%s\n", i, message.mesg_text);
+				printf("[%d]Отправлено клиенту-получателю:%s\n", i, message.mesg_text);
 				i++;
 			}
 		}
@@ -259,7 +243,6 @@ int main(int argc, char *argv[]) {
 		exit(1);	
 	}
 
-	printf("Broadcast IP: %s\n", argv[1]);
 	broadcastaddress = argv[1];
 
 	pthread_create(&threads[1], NULL, UdpBroadcastSenderForClientSender, 0);

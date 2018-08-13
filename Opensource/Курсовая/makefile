@@ -10,8 +10,8 @@ clientsender : clientsender.o
 clientsender.o : clientsender.c
 	gcc -c clientsender.c
 
-cliendreceiver : cliendreceiver.o
-	gcc -Wall cliendreceiver.o -o cliendreceiver
+clientreciever : clientreciever.o
+	gcc -Wall clientreciever.o -o clientreciever
 
-cliendreceiver.o : cliendreceiver.c
-	gcc -c cliendreceiver.c
+clientreciever.o : clientreciever.c
+	gcc -c clientreciever.c

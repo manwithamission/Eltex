@@ -1,19 +1,15 @@
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <sys/socket.h> /* for socket(), connect(), sendto(), and recvfrom() */
-#include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <stdio.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <string.h> 
+#include <unistd.h> 
 #include <string.h>
 
-// #define MAX_MSG_SIZE	  14
 #define MAXRECVSTRING     255
 #define BROADCASTPORTCLIENTSENDER 2001
-// #define BROADCASTPORTCLIENTRECEIVER 2002
 #define TCPPORTCLIENTSENDER 2500
 #define STRNGLEN 69 
-// #define TCPPORTCLIENTRECEIVER 2501
-// #define MSGKEY 10
 
 void Error(char *errorMessage) {
 	perror(errorMessage);
@@ -45,50 +41,44 @@ char *randstring(int length) {
 
 int main(int argc, char *argv[]) {	
 
-	int sock;                         /* Socket */
-	struct sockaddr_in broadcastAddr; /* Broadcast Address */
-	unsigned short broadcastPort;     /* Broadcast port */
-	char *recvString; /* Buffer for received string */
-	int recvStringLen;                /* Length of received string */	
+	int sock;
+	struct sockaddr_in broadcastAddr;
+	unsigned short broadcastPort;
+	char *recvString;
+	int recvStringLen;	
 
-	struct sockaddr_in src_addr;	  /* Echo server address */
-	unsigned short serverport;     	  /* Echo server port */
-	char *serverIP;                      //Server IP address (dotted quad) 
+	struct sockaddr_in src_addr;
+	unsigned short serverport;
+	char *serverIP;
 
 	recvString = (char *) malloc(sizeof(char) * MAXRECVSTRING);
 	if ( (sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0 ) {
-		Error("socket() failed");
+		Error("socket()");
 	}
 
 	broadcastPort = htons(BROADCASTPORTCLIENTSENDER);
 
-	memset(&broadcastAddr, 0, sizeof(broadcastAddr));   /* Zero out structure */
-	broadcastAddr.sin_family = AF_INET;                 /* Internet address family */
-	broadcastAddr.sin_addr.s_addr = htonl(INADDR_ANY);  /* Any incoming interface */
-	broadcastAddr.sin_port = broadcastPort;             /* Broadcast port */
+	memset(&broadcastAddr, 0, sizeof(broadcastAddr));
+	broadcastAddr.sin_family = AF_INET;
+	broadcastAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	broadcastAddr.sin_port = broadcastPort;
 
 	if ( bind(sock, (struct sockaddr *) &broadcastAddr, sizeof(broadcastAddr)) < 0 ) {
-		Error("bind() failed");
+		Error("bind()");
 	}
 
 	socklen_t src_addr_len = sizeof(src_addr);
 	memset(&src_addr, 0x00, src_addr_len);
 
-	// char tmpip[50] = "";
-	// sprintf(tmpip, "%d", broadcastAddr.sin_addr.s_addr);
-	// char tmpport[50] = "";
-	// sprintf(tmpport, "%d", broadcastAddr.sin_port);
-	// printf("%s:%s\n", tmpip, tmpport);
-
 	while (1) {
 	
 		if ((recvStringLen = recvfrom(sock, recvString, MAXRECVSTRING, 0, (struct sockaddr *) &src_addr, &src_addr_len)) < 0) {
-			Error("recvfrom() failed");
+			Error("recvfrom()");
 		}
 
 		recvString[recvStringLen] = '\0';
-		printf("UDP Broadcast received: %s\n", recvString);      		 /* Print the received string */
-		printf("Server address: %s\n", inet_ntoa(src_addr.sin_addr));	 /* Print source ip */
+		printf("UDP сообщение: %s\n", recvString);
+		printf("Адресс сервера: %s\n", inet_ntoa(src_addr.sin_addr));
 		if ( strcmp(recvString, "Жду сообщений") == 0 ) {
 			break;
 		}
@@ -96,33 +86,30 @@ int main(int argc, char *argv[]) {
 	
 	close(sock);
 
-	serverIP = inet_ntoa(src_addr.sin_addr);		/* server IP address (dotted quad) */
-	serverport = TCPPORTCLIENTSENDER;						/* Use given port */
+	serverIP = inet_ntoa(src_addr.sin_addr);
+	serverport = TCPPORTCLIENTSENDER;
 
-	/* Create a reliable, stream socket using TCP */
 	if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		Error("socket() failed");
+		Error("socket()");
 	}
-	printf("ЧТО ТУТ У НАС%s %d\n", serverIP, serverport);
 
-	/* Construct the server address structure */
-	src_addr.sin_family      = AF_INET;				/* Internet address family */
-	src_addr.sin_addr.s_addr = inet_addr(serverIP);	/* Server IP address */
-	src_addr.sin_port        = htons(serverport); 	/* Server port */
+	src_addr.sin_family      = AF_INET;
+	src_addr.sin_addr.s_addr = inet_addr(serverIP);
+	src_addr.sin_port        = htons(serverport);
 
 	if (connect(sock, (struct sockaddr *) &src_addr, sizeof(src_addr)) < 0) {
-		Error("connect() failed");
+		Error("connect()");
 	}
 	
-	printf("Start TCP sending\n");
+	printf("Запускаю отправку сообщений серверу\n");
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 1; i < 6; i++) {
 		char *bufrndstr;
 		bufrndstr = randstring(10);
 		if (send(sock, bufrndstr, 10, 0) == -1) {
-			Error("send() sent a different number of bytes than expected");	                 
+			Error("send()");	                 
 		}
-		printf("[%d]\tTCP sended:\t%s\n", i, bufrndstr);
+		printf("[%d]TCP сообщение отправлено:%s\n", i, bufrndstr);
 		sleep(3);
 	}
 	close(sock);
