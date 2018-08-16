@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
 			Error("send()");	                 
 		}
 
-		printf("[%d]TCP сообщение отправлено:%p %s %d\n", i, bufrndstr, sub1.value, len);
+		printf("[%d]TCP сообщение отправлено:\nАдрес\t%p \nСтрока\t%s \nДлина строки\t%d\n------------------------\n", i, bufrndstr, sub1.value, len);
 		free(bufrndstr);
 		sleep(3);
 	}

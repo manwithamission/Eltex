@@ -164,6 +164,7 @@ void *TcpConnectionClientSender(void *arg) {
 	unsigned int clntLen;
 	clntLen = sizeof(echoClntAddr);
 	int recvMsgSize;
+	int i = 1;
 	
 	buf = &msqid_ds;
 
@@ -182,8 +183,7 @@ void *TcpConnectionClientSender(void *arg) {
 		while (1) {
 			if ((recvMsgSize = recv(clientsocket, buffer, RCVBUFSIZE, 0)) < 0) {
 				Error("recv() failed");
-			}
-			if (recvMsgSize > 0) {
+			} else if (recvMsgSize > 0) {
 				// printf("%s\n", buffer);
 				msg = dmessage__unpack(NULL, RCVBUFSIZE, buffer); // Deserialize the serialized input
 				if (msg == NULL){ // Something failed
@@ -191,19 +191,24 @@ void *TcpConnectionClientSender(void *arg) {
 				}
 				sub1 = msg->a;
 				strcpy(message.mesg_text, sub1->value);
-				printf("%s\n", message.mesg_text);
+				printf("Получено TCP сообщение: %s\n", message.mesg_text);
 				message.mesg_type = 1;
 				msgsnd(msgid, &message, length, 1);
 				msgctl(msgid, IPC_STAT, buf);
-				printf("Сообщений в очереди %ld\n", buf->msg_qnum);
+				// printf("Сообщений в очереди %ld\n", buf->msg_qnum);
 				dmessage__free_unpacked(msg,NULL);
-			} 
-			if (recvMsgSize == 0) {
+				i++;
+				// printf("Номер%d\n", i);
+			} else if (recvMsgSize == 0) {
+				// printf("что произошло\n");
+				// close(clientsocket);
+				break;
 				// msgctl(msgid, IPC_STAT, buf);
 				// printf("%ld\n", buf->msg_qnum);
-				break;
+				// break;
 			}
 		}
+		close(clientsocket);
 	}
 }
 
@@ -234,7 +239,7 @@ void *TcpConnectionClientReceiver(void *arg) {
 		}
 		while (1) {
 			msgctl(msgid, IPC_STAT, buf);
-			if (buf->msg_qnum >= 0) {
+			if (buf->msg_qnum > 0) {
 				sleep(3);
 				if (msgrcv(msgid, &message, length, message.mesg_type, 0) < 0) {
 					Error("msgrecv()");
@@ -244,17 +249,20 @@ void *TcpConnectionClientReceiver(void *arg) {
 				len = dmessage__get_packed_size(&msg);		// This is the calculated packing length
 				bufstring = malloc(len);					// Allocate memory
 				dmessage__pack(&msg, bufstring);			// Pack msg, including submessages
-				// printf("%ld\n", buf->msg_qnum);
 				if (send(clientsocket, bufstring, len, 0) < 0) {
 					Error("send()");
 				}
-				printf("[%d]Отправлено клиенту-получателю:%p %s %d\n", i, bufstring, sub1.value, len);
+				printf("------------------------\n[%d]Отправлено клиенту-получателю:\nАдрес\t%p \nСтрока\t%s \nДлина строки\t%d\nСообщений в очереди после отправки:%ld\n------------------------\n", i, bufstring, sub1.value, len, buf->msg_qnum);
+				// printf("Сообщений в очереди:%ld\n", buf->msg_qnum);
 				// printf("[%d]Отправлено клиенту-получателю:%s\n", i, message.mesg_text);
 				free(bufstring);
 				i++;
+			} else if (buf->msg_qnum == 0) {
+				break;
 			}
 		}
-		msgctl(msgid, IPC_RMID, 0);
+		close(clientsocket);
+		// msgctl(msgid, IPC_RMID, 0);
 	}
 }
 

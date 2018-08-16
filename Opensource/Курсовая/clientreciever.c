@@ -64,9 +64,8 @@ int main(int argc, char *argv[]) {
 		if ( strcmp(recvString, "Есть сообщения") == 0 ) {
 			break;
 		} 
-		if (recvStringLen  == 0) {
-			printf("Жду заполнения очереди");
-		}
+		// if (recvStringLen  == 0) {
+		// }
 	}
 	
 	close(sock);
@@ -97,7 +96,9 @@ int main(int argc, char *argv[]) {
 		sleep(1);
 		if ((recvMsgSize = recv(sock, buf, RCVBUFSIZE, 0)) < 0) {
 				Error("recv() failed");
-			}
+		}
+		// if (recvMsgSize == 0) {
+		// } else 
 		if (recvMsgSize > 0) {
 			msg = dmessage__unpack(NULL, RCVBUFSIZE, buf); // Deserialize the serialized input
 			if (msg == NULL){ // Something failed
@@ -105,7 +106,7 @@ int main(int argc, char *argv[]) {
 			}
 			sub1 = msg->a;
 
-			printf("[%d]Полученное TCP сообщение:%p %s %d\n", i, buf, sub1->value, RCVBUFSIZE);
+			printf("[%d]Получено TCP сообщение:\nАдрес\t%p \nСтрока\t%s \nДлина строки\t%d\n------------------------\n", i, buf, sub1->value, RCVBUFSIZE);
 			// printf("[%d]Полученное TCP сообщение:%s\n", i, sub);
 			i++;
 		}
