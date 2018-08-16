@@ -223,8 +223,8 @@ void *TcpConnectionClientReceiver(void *arg) {
 	
 	buf = &msqid_ds;
 
-	DMessage msg    = DMESSAGE__INIT;   // DMESSAGE
-	Submessage sub1 = SUBMESSAGE__INIT; // SUBMESSAGE A
+	DMessage msg    = DMESSAGE__INIT;		// DMESSAGE
+	Submessage sub1 = SUBMESSAGE__INIT;		// SUBMESSAGE A
 	void *bufstring;
 	unsigned len;
 	

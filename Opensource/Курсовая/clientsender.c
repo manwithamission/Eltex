@@ -113,8 +113,10 @@ int main(int argc, char *argv[]) {
 	
 	printf("Запускаю отправку сообщений серверу\n");
 
-	for (int i = 1; i < 6; i++) {
+	// for (int i = 1; i < 6; i++) {
 		// char *bufrndstr;
+	while (1) {
+		int i = 1;
 		sub1.value = randstring(10);
 		msg.a = &sub1;
 		len = dmessage__get_packed_size (&msg); // This is the calculated packing length
@@ -127,7 +129,8 @@ int main(int argc, char *argv[]) {
 
 		printf("[%d]TCP сообщение отправлено:\nАдрес\t%p \nСтрока\t%s \nДлина строки\t%d\n------------------------\n", i, bufrndstr, sub1.value, len);
 		free(bufrndstr);
-		sleep(3);
+		sleep(2);
+		i++;
 	}
 	close(sock);
 }

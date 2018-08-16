@@ -110,10 +110,10 @@ int main(int argc, char *argv[]) {
 			// printf("[%d]Полученное TCP сообщение:%s\n", i, sub);
 			i++;
 		}
-		if (i == 6) {
-			// printf("Пусто\n");
-			break;
-		}
+		// if (i == 6) {
+		// 	// printf("Пусто\n");
+		// 	break;
+		// }
 		// if (i == 6)	{
 		// 	break;
 		// }
