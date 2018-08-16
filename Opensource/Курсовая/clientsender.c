@@ -5,6 +5,7 @@
 #include <string.h> 
 #include <unistd.h> 
 #include <string.h>
+#include "message.pb-c.h"
 
 #define MAXRECVSTRING     255
 #define BROADCASTPORTCLIENTSENDER 2001
@@ -51,6 +52,8 @@ int main(int argc, char *argv[]) {
 	unsigned short serverport;
 	char *serverIP;
 
+	unsigned len;
+
 	recvString = (char *) malloc(sizeof(char) * MAXRECVSTRING);
 	if ( (sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0 ) {
 		Error("socket()");
@@ -82,6 +85,9 @@ int main(int argc, char *argv[]) {
 		if ( strcmp(recvString, "Жду сообщений") == 0 ) {
 			break;
 		}
+		if (recvStringLen == 0) {
+			printf("Жду когда очередь освободится");
+		}
 	}
 	
 	close(sock);
@@ -100,16 +106,27 @@ int main(int argc, char *argv[]) {
 	if (connect(sock, (struct sockaddr *) &src_addr, sizeof(src_addr)) < 0) {
 		Error("connect()");
 	}
+
+	DMessage msg    = DMESSAGE__INIT;   // DMESSAGE
+	Submessage sub1 = SUBMESSAGE__INIT; // SUBMESSAGE A
+	void *bufrndstr;
 	
 	printf("Запускаю отправку сообщений серверу\n");
 
 	for (int i = 1; i < 6; i++) {
-		char *bufrndstr;
-		bufrndstr = randstring(10);
-		if (send(sock, bufrndstr, 10, 0) == -1) {
+		// char *bufrndstr;
+		sub1.value = randstring(10);
+		msg.a = &sub1;
+		len = dmessage__get_packed_size (&msg); // This is the calculated packing length
+		bufrndstr = malloc (len);                     // Allocate memory
+		dmessage__pack (&msg, bufrndstr);             // Pack msg, including submessages
+
+		if (send(sock, bufrndstr, len, 0) == -1) {
 			Error("send()");	                 
 		}
-		printf("[%d]TCP сообщение отправлено:%s\n", i, bufrndstr);
+
+		printf("[%d]TCP сообщение отправлено:%p %s %d\n", i, bufrndstr, sub1.value, len);
+		free(bufrndstr);
 		sleep(3);
 	}
 	close(sock);

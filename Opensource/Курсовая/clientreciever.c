@@ -5,10 +5,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <string.h>
+#include "message.pb-c.h"
 
 #define MAX_MSG_SIZE 14
 #define MAXRECVSTRING 255
-#define RCVBUFSIZE 100
+#define RCVBUFSIZE 14
 #define BROADCASTPORTCLIENTRECEIVER 2002
 #define TCPPORTCLIENTRECEIVER   2501
 
@@ -27,7 +28,6 @@ int main(int argc, char *argv[]) {
 	int recvStringLen;
 
 	int i = 1;
-	uint8_t buf[MAX_MSG_SIZE];
 
 	struct sockaddr_in src_addr;
 	unsigned short serverport;
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 	memset(&src_addr, 0x00, src_addr_len);
 
 	while (1) {
-		
+		sleep(1);
 		if ((recvStringLen = recvfrom(sock, recvString, MAXRECVSTRING, 0, (struct sockaddr *) &src_addr, &src_addr_len)) < 0) {
 			Error("recvfrom()");
 		}
@@ -63,6 +63,9 @@ int main(int argc, char *argv[]) {
 		printf("Адресс сервера: %s\n", inet_ntoa(src_addr.sin_addr));
 		if ( strcmp(recvString, "Есть сообщения") == 0 ) {
 			break;
+		} 
+		if (recvStringLen  == 0) {
+			printf("Жду заполнения очереди");
 		}
 	}
 	
@@ -70,6 +73,12 @@ int main(int argc, char *argv[]) {
 
 	serveraddress = inet_ntoa(src_addr.sin_addr);
 	serverport = TCPPORTCLIENTRECEIVER;
+
+	int recvMsgSize;
+
+	DMessage *msg;		// DMessage using submessages
+	Submessage *sub1;	// Submessages
+	uint8_t buf[MAX_MSG_SIZE];
 
 	if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 		Error("socket()");
@@ -86,15 +95,27 @@ int main(int argc, char *argv[]) {
 	printf("Жду сообщений от сервера\n");
 	while (1) {
 		sleep(1);
-		if (recv(sock, buf, 10, 0) == -1) {
-			Error("recv()");
-		}
+		if ((recvMsgSize = recv(sock, buf, RCVBUFSIZE, 0)) < 0) {
+				Error("recv() failed");
+			}
+		if (recvMsgSize > 0) {
+			msg = dmessage__unpack(NULL, RCVBUFSIZE, buf); // Deserialize the serialized input
+			if (msg == NULL){ // Something failed
+				fprintf(stderr,"error unpacking incoming message\n");
+			}
+			sub1 = msg->a;
 
-		printf("[%d]Полученное TCP сообщение:%s\n", i, buf);
-		i++;
-		if (i == 6)	{
+			printf("[%d]Полученное TCP сообщение:%p %s %d\n", i, buf, sub1->value, RCVBUFSIZE);
+			// printf("[%d]Полученное TCP сообщение:%s\n", i, sub);
+			i++;
+		}
+		if (i == 6) {
+			// printf("Пусто\n");
 			break;
 		}
+		// if (i == 6)	{
+		// 	break;
+		// }
 	}
 	close(sock);
 }

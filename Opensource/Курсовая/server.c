@@ -11,15 +11,18 @@
 #include <arpa/inet.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include "message.pb-c.h"
 
+#define MAX_MSG_SIZE 20
+#define RCVBUFSIZE 20
 #define BROADCASTPORTCLIENTSENDER 2001
 #define BROADCASTPORTCLIENTRECEIVER 2002
 #define TCPPORTCLIENTSENDER 2500
 #define TCPPORTCLIENTRECEIVER 2501
 
 struct mesg_buffer {
-    long mesg_type;
-    uint8_t mesg_text[20];
+	long mesg_type;
+	uint8_t mesg_text[20];
 } message;
 
 int msgid;
@@ -151,6 +154,9 @@ void *UdpBroadcastSenderForClientReceiver(void *arg) {
 }
 
 void *TcpConnectionClientSender(void *arg) {
+	DMessage *msg;		// DMessage using submessages
+	Submessage *sub1;	// Submessages
+
 	int serversocket;
 	int clientsocket;
 	unsigned short serverport;
@@ -160,6 +166,8 @@ void *TcpConnectionClientSender(void *arg) {
 	int recvMsgSize;
 	
 	buf = &msqid_ds;
+
+	uint8_t buffer[MAX_MSG_SIZE]; // Input data container for bytes
 	
 	serverport = TCPPORTCLIENTSENDER;
 
@@ -172,17 +180,26 @@ void *TcpConnectionClientSender(void *arg) {
 		printf("Жду сообщений от клиента-отправителя\n");
 
 		while (1) {
-			if ((recvMsgSize = recv(clientsocket, message.mesg_text, 10, 0)) < 0) {
+			if ((recvMsgSize = recv(clientsocket, buffer, RCVBUFSIZE, 0)) < 0) {
 				Error("recv() failed");
 			}
 			if (recvMsgSize > 0) {
+				// printf("%s\n", buffer);
+				msg = dmessage__unpack(NULL, RCVBUFSIZE, buffer); // Deserialize the serialized input
+				if (msg == NULL){ // Something failed
+					fprintf(stderr,"error unpacking incoming message\n");
+				}
+				sub1 = msg->a;
+				strcpy(message.mesg_text, sub1->value);
 				printf("%s\n", message.mesg_text);
 				message.mesg_type = 1;
 				msgsnd(msgid, &message, length, 1);
 				msgctl(msgid, IPC_STAT, buf);
 				printf("Сообщений в очереди %ld\n", buf->msg_qnum);
-			} else {
-				msgctl(msgid, IPC_STAT, buf);
+				dmessage__free_unpacked(msg,NULL);
+			} 
+			if (recvMsgSize == 0) {
+				// msgctl(msgid, IPC_STAT, buf);
 				// printf("%ld\n", buf->msg_qnum);
 				break;
 			}
@@ -200,6 +217,11 @@ void *TcpConnectionClientReceiver(void *arg) {
 	int i = 1;
 	
 	buf = &msqid_ds;
+
+	DMessage msg    = DMESSAGE__INIT;   // DMESSAGE
+	Submessage sub1 = SUBMESSAGE__INIT; // SUBMESSAGE A
+	void *bufstring;
+	unsigned len;
 	
 	serverport = TCPPORTCLIENTRECEIVER;
 
@@ -212,16 +234,23 @@ void *TcpConnectionClientReceiver(void *arg) {
 		}
 		while (1) {
 			msgctl(msgid, IPC_STAT, buf);
-			if (buf->msg_qnum > 0) {
+			if (buf->msg_qnum >= 0) {
 				sleep(3);
 				if (msgrcv(msgid, &message, length, message.mesg_type, 0) < 0) {
 					Error("msgrecv()");
 				}
+				sub1.value = message.mesg_text;
+				msg.a = &sub1;
+				len = dmessage__get_packed_size(&msg);		// This is the calculated packing length
+				bufstring = malloc(len);					// Allocate memory
+				dmessage__pack(&msg, bufstring);			// Pack msg, including submessages
 				// printf("%ld\n", buf->msg_qnum);
-				if (send(clientsocket, message.mesg_text, 10, 0) < 0) {
-					Error("send()");	                 
+				if (send(clientsocket, bufstring, len, 0) < 0) {
+					Error("send()");
 				}
-				printf("[%d]Отправлено клиенту-получателю:%s\n", i, message.mesg_text);
+				printf("[%d]Отправлено клиенту-получателю:%p %s %d\n", i, bufstring, sub1.value, len);
+				// printf("[%d]Отправлено клиенту-получателю:%s\n", i, message.mesg_text);
+				free(bufstring);
 				i++;
 			}
 		}
@@ -237,13 +266,7 @@ int main(int argc, char *argv[]) {
 	void *status[threadcount];
 	
 	broadcastaddress = (char *) malloc(sizeof(char)*15);
- 
-	if (argc < 2) {
-		printf("Syntax: <BroadcastIP>\n");
-		exit(1);	
-	}
-
-	broadcastaddress = argv[1];
+	broadcastaddress = "127.0.0.1";
 
 	pthread_create(&threads[1], NULL, UdpBroadcastSenderForClientSender, 0);
 	pthread_create(&threads[2], NULL, TcpConnectionClientSender, 0);
