@@ -1,17 +1,16 @@
-server : server.o message.pb-c.c
+main : server.o clientsender.o clientreciever.o message.pb-c.c
 	gcc -Wall server.o message.pb-c.c -lprotobuf-c -o server -pthread
-		
-server.o : server.c
-	gcc -c server.c
-
-clientsender : clientsender.o
 	gcc -Wall clientsender.o message.pb-c.c -lprotobuf-c -o clientsender
+	gcc -Wall clientreciever.o message.pb-c.c -lprotobuf-c -o clientreciever
 		
 clientsender.o : clientsender.c
 	gcc -c clientsender.c
 
-clientreciever : clientreciever.o
-	gcc -Wall clientreciever.o message.pb-c.c -lprotobuf-c -o clientreciever
-
 clientreciever.o : clientreciever.c
 	gcc -c clientreciever.c
+
+clean:
+	rm -rf server
+	rm -rf clientsender
+	rm -rf clientreciever
+	rm -rf *.o

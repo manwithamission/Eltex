@@ -36,7 +36,6 @@ char *randstring(int length) {
 	}
 
 	randomString[length] = '\0';
-
 	return randomString;
 }
 
@@ -115,22 +114,28 @@ int main(int argc, char *argv[]) {
 
 	// for (int i = 1; i < 6; i++) {
 		// char *bufrndstr;
+	int i = 1;
 	while (1) {
-		int i = 1;
 		sub1.value = randstring(10);
 		msg.a = &sub1;
 		len = dmessage__get_packed_size (&msg); // This is the calculated packing length
-		bufrndstr = malloc (len);                     // Allocate memory
+		bufrndstr = malloc(len);                     // Allocate memory
 		dmessage__pack (&msg, bufrndstr);             // Pack msg, including submessages
+		
+		printf("%s\n", sub1.value);
 
-		if (send(sock, bufrndstr, len, 0) == -1) {
-			Error("send()");	                 
+		if (send(sock, bufrndstr, len, 0) < 0) {
+			Error("send()");
+		} else if (send(sock, bufrndstr, len, 0) == 0) {
+			printf("Пустое сообщение%s\n", sub1.value);
 		}
 
 		printf("[%d]TCP сообщение отправлено:\nАдрес\t%p \nСтрока\t%s \nДлина строки\t%d\n------------------------\n", i, bufrndstr, sub1.value, len);
 		free(bufrndstr);
+		free(sub1.value);
 		sleep(2);
 		i++;
 	}
+	free(recvString);
 	close(sock);
 }

@@ -51,11 +51,12 @@ int main(int argc, char *argv[]) {
 
 	socklen_t src_addr_len = sizeof(src_addr);
 	memset(&src_addr, 0x00, src_addr_len);
-
 	while (1) {
 		sleep(1);
 		if ((recvStringLen = recvfrom(sock, recvString, MAXRECVSTRING, 0, (struct sockaddr *) &src_addr, &src_addr_len)) < 0) {
 			Error("recvfrom()");
+		} else if ((recvStringLen = recvfrom(sock, recvString, MAXRECVSTRING, 0, (struct sockaddr *) &src_addr, &src_addr_len)) < 0) {
+			printf("Сообщений нет в очереди\n");
 		}
 
 		recvString[recvStringLen] = '\0';
@@ -63,9 +64,7 @@ int main(int argc, char *argv[]) {
 		printf("Адресс сервера: %s\n", inet_ntoa(src_addr.sin_addr));
 		if ( strcmp(recvString, "Есть сообщения") == 0 ) {
 			break;
-		} 
-		// if (recvStringLen  == 0) {
-		// }
+		}
 	}
 	
 	close(sock);
@@ -95,28 +94,22 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		sleep(1);
 		if ((recvMsgSize = recv(sock, buf, RCVBUFSIZE, 0)) < 0) {
-				Error("recv() failed");
+			Error("recv() failed");
 		}
-		// if (recvMsgSize == 0) {
-		// } else 
 		if (recvMsgSize > 0) {
 			msg = dmessage__unpack(NULL, RCVBUFSIZE, buf); // Deserialize the serialized input
 			if (msg == NULL){ // Something failed
 				fprintf(stderr,"error unpacking incoming message\n");
 			}
 			sub1 = msg->a;
-
 			printf("[%d]Получено TCP сообщение:\nАдрес\t%p \nСтрока\t%s \nДлина строки\t%d\n------------------------\n", i, buf, sub1->value, RCVBUFSIZE);
-			// printf("[%d]Полученное TCP сообщение:%s\n", i, sub);
 			i++;
+			dmessage__free_unpacked(msg,NULL);
+		} else if (recvMsgSize == 0) {
+			printf("Сообщения кончились\n");
+			break;
 		}
-		// if (i == 6) {
-		// 	// printf("Пусто\n");
-		// 	break;
-		// }
-		// if (i == 6)	{
-		// 	break;
-		// }
 	}
+	free(recvString);
 	close(sock);
 }
