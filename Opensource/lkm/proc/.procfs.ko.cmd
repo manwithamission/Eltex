@@ -1,1 +1,0 @@
-cmd_/home/arthur/Eltex/Opensource/lkm/proc/procfs.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/arthur/Eltex/Opensource/lkm/proc/procfs.ko /home/arthur/Eltex/Opensource/lkm/proc/procfs.o /home/arthur/Eltex/Opensource/lkm/proc/procfs.mod.o ;  true

@@ -1,1 +1,0 @@
-cmd_/home/arthur/Eltex/Opensource/lkm/ioctl/ioctlled.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/arthur/Eltex/Opensource/lkm/ioctl/ioctlled.ko /home/arthur/Eltex/Opensource/lkm/ioctl/ioctlled.o /home/arthur/Eltex/Opensource/lkm/ioctl/ioctlled.mod.o ;  true
