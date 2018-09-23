@@ -30,7 +30,6 @@ struct ThreadArg {
 	long int threadID;
 };
 
-// int limit;
 int msgid;
 int length;
 struct msqid_ds msqid_ds, *buf;
@@ -43,7 +42,6 @@ void Error(char *errorMessage) {
 }
 
 int queue() {
-
 	key_t key;
 	int msgid;
 	key = ftok(".", 65);
@@ -79,7 +77,6 @@ int CreateTCPServerSocket(unsigned short port) {
 }
 
 void *UdpBroadcastSenderForClientSender(void *arg) {
-
 	int sock;
 	struct sockaddr_in broadcastAddr;
 	unsigned short broadcastPort;
@@ -108,18 +105,14 @@ void *UdpBroadcastSenderForClientSender(void *arg) {
 	sendStringLen = strlen(sendString);
 	
 	while (1) {
-		// printf("Сообщений в очереди UDP для клиента-отправителя %ld\n", buf->msg_qnum);
-		// if (buf->msg_qnum < 1) {
 		sleep(1);
 		if (sendto(sock, sendString, sendStringLen, 0, (struct sockaddr *) &broadcastAddr, sizeof(broadcastAddr)) != sendStringLen) {
 			Error("sendto()");
 		}
-		// }
 	}
 }
 
 void *UdpBroadcastSenderForClientReceiver(void *arg) {
-
 	int sock;
 	struct sockaddr_in broadcastAddr;
 	unsigned short broadcastPort;
@@ -173,7 +166,6 @@ void HandleTCPClient(int clientsocket, long int threadID) {
 		if ((recvMsgSize = recv(clientsocket, buffer, RCVBUFSIZE, 0)) < 0) {
 			Error("recv() failed");
 		}
-		// printf("ПРИЛЕТЕЛО %s\n", buffer);
 		msg = dmessage__unpack(NULL, RCVBUFSIZE, buffer); // Deserialize the serialized input
 		if (msg == NULL){ // Something failed
 			printf("%p\n", msg);
@@ -191,77 +183,26 @@ void HandleTCPClient(int clientsocket, long int threadID) {
 			printf("Клиент-отправитель под номером %ld отключился\n", threadID);
 			break;
 		}
-		// printf("Номер%d\n", i);
 	}
-	// if (recvMsgSize == 0) {
-	// 	// printf("что произошло\n");
-	// 	close(clientsocket);
-	// 	// msgctl(msgid, IPC_STAT, buf);
-	// 	// printf("%ld\n", buf->msg_qnum);
-	// 	// break;
-	// }
 	close(clientsocket);
 }
 
-void *ThreadMainSender(void *threadArg){
-	// DMessage *msg;		// DMessage using submessages
-	// Submessage *sub1;	// Submessages
-
-	// int recvMsgSize;
-	// int i = 1;
-	
-	// buf = &msqid_ds;
-
-	// uint8_t buffer[MAX_MSG_SIZE]; // Input data container for bytes	
-
-	int clientsocket;				/* Socket descriptor for client connection */
+void *ThreadMainSender(void *threadArg) {
+	int clientsocket;
 	long int threadID;
-	/* Guarantees that thread resources are deallocated upon return */
+
 	pthread_detach(pthread_self()); 
 
-	/* Extract socket file descriptor from argument */
 	clientsocket = ((struct ThreadArg *) threadArg) -> clientsocket;
 	threadID = ((struct ThreadArg *) threadArg) -> threadID;
 	free(threadArg);			/* Deallocate memory for argument */
 
 	HandleTCPClient(clientsocket, threadID);
 
-	// if ((recvMsgSize = recv(clientsocket, buffer, RCVBUFSIZE, 0)) < 0) {
-	// 	Error("recv() failed");
-	// }
-
-	// while (recvMsgSize > 0) {
-	// 	printf("%s\n", buffer);
-	// 	msg = dmessage__unpack(NULL, RCVBUFSIZE, buffer); // Deserialize the serialized input
-	// 	if (msg == NULL){ // Something failed
-	// 		fprintf(stderr,"error unpacking incoming message\n");
-	// 	}
-	// 	sub1 = msg->a;
-	// 	strcpy(message.mesg_text, sub1->value);
-	// 	// printf("Получено TCP сообщение: %s\n", message.mesg_text);
-	// 	message.mesg_type = 1;
-	// 	msgsnd(msgid, &message, length, 1);
-	// 	msgctl(msgid, IPC_STAT, buf);
-	// 	// printf("Сообщений в очереди %ld\n", buf->msg_qnum);
-	// 	dmessage__free_unpacked(msg,NULL);
-	// 	i++;
-	// 	// printf("Номер%d\n", i);
-	// }
-	// // if (recvMsgSize == 0) {
-	// // 	// printf("что произошло\n");
-	// // 	close(clientsocket);
-	// // 	// msgctl(msgid, IPC_STAT, buf);
-	// // 	// printf("%ld\n", buf->msg_qnum);
-	// // 	// break;
-	// // }
-	// close(clientsocket);
 	return 0;
 }
 
 void *TcpConnectionClientSender(void *arg) {
-	// DMessage *msg;		// DMessage using submessages
-	// Submessage *sub1;	// Submessages
-
 	pthread_t threadID;
 	struct ThreadArg *threadArg;
 
@@ -271,12 +212,6 @@ void *TcpConnectionClientSender(void *arg) {
 	struct sockaddr_in echoClntAddr;
 	unsigned int clntLen;
 	clntLen = sizeof(echoClntAddr);
-	// int recvMsgSize;
-	// int i = 1;
-	
-	// buf = &msqid_ds;
-
-	// uint8_t buffer[MAX_MSG_SIZE]; // Input data container for bytes
 	
 	serverport = TCPPORTCLIENTSENDER;
 
@@ -300,42 +235,10 @@ void *TcpConnectionClientSender(void *arg) {
 		}
 		
 		printf("Create thread to TCP connect with client, ID:\t%ld\n", (long int) threadID);
-
-		// if ((recvMsgSize = recv(clientsocket, buffer, RCVBUFSIZE, 0)) < 0) {
-		// 	Error("recv() failed");
-		// }
-
-		// while (recvMsgSize > 0) {
-		// 	// printf("%s\n", buffer);
-		// 	msg = dmessage__unpack(NULL, RCVBUFSIZE, buffer); // Deserialize the serialized input
-		// 	if (msg == NULL){ // Something failed
-		// 		fprintf(stderr,"error unpacking incoming message\n");
-		// 	}
-		// 	sub1 = msg->a;
-		// 	strcpy(message.mesg_text, sub1->value);
-		// 	printf("Получено TCP сообщение: %s\n", message.mesg_text);
-		// 	message.mesg_type = 1;
-		// 	msgsnd(msgid, &message, length, 1);
-		// 	msgctl(msgid, IPC_STAT, buf);
-		// 	// printf("Сообщений в очереди %ld\n", buf->msg_qnum);
-		// 	dmessage__free_unpacked(msg,NULL);
-		// 	i++;
-		// 	// printf("Номер%d\n", i);
-		// }
-		// if (recvMsgSize == 0) {
-		// 	// printf("что произошло\n");
-		// 	close(clientsocket);
-		// 	// msgctl(msgid, IPC_STAT, buf);
-		// 	// printf("%ld\n", buf->msg_qnum);
-		// 	// break;
-		// }
-
-		// close(clientsocket);
 	}
 }
 
 void HandleTCPReceiver(int clientsocket) {
-
 	DMessage msg    = DMESSAGE__INIT;		// DMESSAGE
 	Submessage sub1 = SUBMESSAGE__INIT;		// SUBMESSAGE A
 	void *bufstring;
@@ -360,8 +263,6 @@ void HandleTCPReceiver(int clientsocket) {
 				Error("send()");
 			}
 			printf("------------------------\n[%d]Отправлено клиенту-получателю:\nАдрес\t%p \nСтрока\t%s \nДлина строки\t%d\nСообщений в очереди после отправки:%ld\n------------------------\n", i, bufstring, sub1.value, len, buf->msg_qnum);
-			// printf("Сообщений в очереди:%ld\n", buf->msg_qnum);
-			// printf("[%d]Отправлено клиенту-получателю:%s\n", i, message.mesg_text);
 			free(bufstring);
 			i++;
 		} else if (buf->msg_qnum == 0) {
@@ -374,15 +275,12 @@ void HandleTCPReceiver(int clientsocket) {
 
 
 void *ThreadMainReceiver(void *threadArg) {
-	
-	int clientsocket;				/* Socket descriptor for client connection */
+	int clientsocket;
 
-	/* Guarantees that thread resources are deallocated upon return */
 	pthread_detach(pthread_self()); 
 
-	/* Extract socket file descriptor from argument */
 	clientsocket = ((struct ThreadArg *) threadArg) -> clientsocket;
-	free(threadArg);			/* Deallocate memory for argument */
+	free(threadArg);
 
 	HandleTCPReceiver(clientsocket);
 
@@ -402,14 +300,8 @@ void *TcpConnectionClientReceiver(void *arg) {
 	int i = 1;
 	
 	buf = &msqid_ds;
-
-	// DMessage msg    = DMESSAGE__INIT;		// DMESSAGE
-	// Submessage sub1 = SUBMESSAGE__INIT;		// SUBMESSAGE A
-	// void *bufstring;
-	// unsigned len;
 	
 	serverport = TCPPORTCLIENTRECEIVER;
-
 	serversocket = CreateTCPServerSocket(serverport);
 
 	while (1) {
@@ -430,40 +322,10 @@ void *TcpConnectionClientReceiver(void *arg) {
 		}
 		
 		printf("Create thread to TCP connect with server, ID:\t%ld\n", (long int) threadID);
-
-		// while (1) {
-		// 	msgctl(msgid, IPC_STAT, buf);
-		// 	if (buf->msg_qnum > 0) {
-		// 		sleep(3);
-		// 		if (msgrcv(msgid, &message, length, message.mesg_type, 0) < 0) {
-		// 			Error("msgrecv()");
-		// 		}
-		// 		sub1.value = message.mesg_text;
-		// 		msg.a = &sub1;
-		// 		len = dmessage__get_packed_size(&msg);		// This is the calculated packing length
-		// 		bufstring = malloc(len);					// Allocate memory
-		// 		dmessage__pack(&msg, bufstring);			// Pack msg, including submessages
-		// 		if (send(clientsocket, bufstring, len, 0) < 0) {
-		// 			Error("send()");
-		// 		}
-		// 		printf("------------------------\n[%d]Отправлено клиенту-получателю:\nАдрес\t%p \nСтрока\t%s \nДлина строки\t%d\nСообщений в очереди после отправки:%ld\n------------------------\n", i, bufstring, sub1.value, len, buf->msg_qnum);
-		// 		// printf("Сообщений в очереди:%ld\n", buf->msg_qnum);
-		// 		// printf("[%d]Отправлено клиенту-получателю:%s\n", i, message.mesg_text);
-		// 		free(bufstring);
-		// 		i++;
-		// 	} else if (buf->msg_qnum == 0) {
-		// 		close(clientsocket);
-		// 		printf("что\n");
-		// 		break;
-		// 	}
-		// }
-		// msgctl(msgid, IPC_RMID, 0);
 	}
 }
 
 int main(int argc, char *argv[]) {
-	// printf("Введите предел сообщений\n");
-	// scanf("%d", &limit)
 	msgid = queue();
 	length = sizeof(message) - sizeof(long);
 	int threadcount = 4;
@@ -471,7 +333,13 @@ int main(int argc, char *argv[]) {
 	void *status[threadcount];
 	
 	broadcastaddress = (char *) malloc(sizeof(char)*15);
-	broadcastaddress = "127.0.0.1";
+	if (argc < 2){
+		printf("Нужно указать broadcast IP\n");
+		return 1;	
+	}
+
+	printf("Broadcast IP: %s\n", argv[1]);
+	broadcastaddress = argv[1];
 
 	pthread_create(&threads[1], NULL, UdpBroadcastSenderForClientSender, 0);
 	pthread_create(&threads[2], NULL, TcpConnectionClientSender, 0);

@@ -20,7 +20,6 @@ void Error(char *errorMessage) {
 }
 
 int main(int argc, char *argv[]) {	
-	
 	int sock;
 	struct sockaddr_in broadcastAddr;
 	unsigned short broadcastPort;

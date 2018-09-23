@@ -18,7 +18,7 @@ void Error(char *errorMessage) {
 }
 
 char *randstring(int length) {    
-	char *string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,.-#'?!";
+	char *string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	size_t stringLen = STRNGLEN;        
 	char *randomString;
 	
